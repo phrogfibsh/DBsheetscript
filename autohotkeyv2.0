@@ -1,0 +1,118 @@
+Gui, +AlwaysOnTop ; Set window to be always on top 
+Gui, Show, w350 h270
+Gui, Add, Text,, ------------------------------------------Key Delay-----------------------------------------
+Gui, Add, Edit, w300 vKeyDelay, 100
+Gui, Add, Text,, ----------------------------------------Sheet Music-----------------------------------------
+Gui, Add, Edit, R10 w300 vPianoMusic
+Gui, Add, Text,, 								  F4 To Begin from Start
+Gui, Add, Text,, 								Press F8 To Stop/Resume
+Gui, Show
+
+; original script: https://pastebin.com/raw/vqKVsfqE
+; extra modifications are added by me
+
+class pianoPlayer{
+	isPaused := false
+	currentIndex := 0
+	originalPos := 1
+	restartSheet := false
+	
+	__New(pianoshit, Keydelay){
+		this.pianoshit := pianoshit
+		this.KeyDelay := Keydelay
+	}
+	
+	startPlayback(){
+		Gui, Submit, Nohide
+		;MsgBox, % "Sheet: " this.pianoshit
+		this.isPaused := false
+		this.currentIndex := this.originalPos
+		this.playMusic()
+	}
+	
+	playMusic(){
+		Sleep, 200
+		while (this.currentIndex := RegExMatch(this.pianoshit, "U)(\[.*]|.)", Keys, this.currentIndex)){
+			Gui, Submit, Nohide
+			;this.KeyDelay := KeyDelay
+			
+			if (GetKeyState("F8", "P")) {
+				this.isPaused := !this.isPaused
+				while (this.isPaused) {
+					ToolTip, % "Playback Paused at Key: " Keys
+					Sleep, 100
+					
+					if (GetKeyState("F8", "P")){
+						Sleep, 100
+						this.restartSheet := true
+						break
+					}
+					
+					if (GetKeyState("F4", "P")){
+						this.restartSheet := true
+						break
+					}
+				}
+			}
+			
+			if (GetKeyState("F4", "P")){
+				this.isPaused := true
+				break
+			}
+
+			this.currentIndex += StrLen(Keys)
+			ToolTip, % "Current Index: " this.currentIndex " | Key: " Keys
+			Keys := Trim(Keys, "[]")
+			SendEvent % Keys
+			Sleep, % this.KeyDelay
+		}
+
+		ToolTip ; Clear tooltip
+		
+		if (this.restartSheet){
+			return
+		}
+	}
+	
+	pauseToggle(){
+		this.isPaused := !this.isPaused
+		if (this.isPaused) {
+			ToolTip, % "Paused at Index: " this.currentIndex
+		} else { ; edit later
+			ToolTip, % "Resuming from Index: " this.currentIndex
+			this.playMusic()
+		}
+		ToolTip ; clear tooltip
+	}
+}
+
+selected_characters := ["z","x","c","v","b","n","m","j","k","l", "[", "]", "-"]
+
+F4:: ; start playback
+	allowedChar := ""
+	filtered_sheet := ""
+	
+	Gui, Submit, Nohide
+	for index, char in selected_characters{
+		allowedChar .= char
+	}
+	_pianoSheet := RegExReplace(PianoMusic, "`n|`r|/")
+	Loop, Parse, _pianoSheet ; only allows ele in selected_characters array
+	{
+		ele := A_LoopField
+		if (InStr(allowedChar, ele)) {
+			filtered_sheet .= ele
+		}
+	}
+	PIANOSHEET := new pianoPlayer(filtered_sheet, KeyDelay)
+    PIANOSHEET.startPlayback()
+return
+
+F8:: ; toggle pause/resume
+	if(IsObject(PIANOSHEET)){
+		PIANOSHEET.pauseToggle()
+	}
+return
+
+GuiClose:
+	ExitApp
