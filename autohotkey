@@ -114,5 +114,9 @@ F8:: ; toggle pause/resume
 	}
 return
 
+-:: 
+    Send, {`}
+return
+
 GuiClose:
 	ExitApp
