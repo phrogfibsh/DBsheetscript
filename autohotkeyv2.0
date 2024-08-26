@@ -101,6 +101,9 @@ F4:: ; start playback
 	{
 		ele := A_LoopField
 		if (InStr(allowedChar, ele)) {
+			if (ele = "-"){
+					ele := "•"
+			}
 			filtered_sheet .= ele
 		}
 	}
@@ -112,10 +115,6 @@ F8:: ; toggle pause/resume
 	if(IsObject(PIANOSHEET)){
 		PIANOSHEET.pauseToggle()
 	}
-return
-
--:: 
-    Send, {`}
 return
 
 GuiClose:
