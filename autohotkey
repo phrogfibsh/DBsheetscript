@@ -9,13 +9,13 @@ Gui, Add, Text,, 								Press F8 To Stop/Resume
 Gui, Show
 
 ; original script: https://pastebin.com/raw/vqKVsfqE
-; extra modifications are added by me
+; extra modifications are added by me (discord: phrogfibsh)
 
 class pianoPlayer{
 	isPaused := false
 	currentIndex := 0
 	originalPos := 1
-	restartSheet := false
+	restartSheet := false ; i need to rename this but idk
 	
 	__New(pianoshit, Keydelay){
 		this.pianoshit := pianoshit
@@ -34,11 +34,10 @@ class pianoPlayer{
 		Sleep, 200
 		while (this.currentIndex := RegExMatch(this.pianoshit, "U)(\[.*]|.)", Keys, this.currentIndex)){
 			Gui, Submit, Nohide
-			;this.KeyDelay := KeyDelay
 			
-			if (GetKeyState("F8", "P")) {
-				this.isPaused := !this.isPaused
-				while (this.isPaused) {
+			if (GetKeyState("F8", "P")){ ; sometimes my macro needs a rest so i press f8
+				this.isPaused := true
+				while (this.isPaused){
 					ToolTip, % "Playback Paused at Key: " Keys
 					Sleep, 100
 					
@@ -55,7 +54,7 @@ class pianoPlayer{
 				}
 			}
 			
-			if (GetKeyState("F4", "P")){
+			if (GetKeyState("F4", "P")){ ; f4 stops too so yea
 				this.isPaused := true
 				break
 			}
@@ -66,7 +65,8 @@ class pianoPlayer{
 			SendInput % Keys
 			Sleep, % this.KeyDelay
 		}
-
+		
+		this.isPaused := true
 		ToolTip ; Clear tooltip
 		
 		if (this.restartSheet){
@@ -76,13 +76,11 @@ class pianoPlayer{
 	
 	pauseToggle(){
 		this.isPaused := !this.isPaused
-		if (this.isPaused) {
-			ToolTip, % "Paused at Index: " this.currentIndex
-		} else { ; edit later
-			ToolTip, % "Resuming from Index: " this.currentIndex
+		if (this.isPaused){
+			; you have been temporarily cursed to breathe manually
+		} else{
 			this.playMusic()
 		}
-		ToolTip ; clear tooltip
 	}
 }
 
@@ -100,7 +98,7 @@ F4:: ; start playback
 	Loop, Parse, _pianoSheet ; only allows ele in selected_characters array
 	{
 		ele := A_LoopField
-		if (InStr(allowedChar, ele)) {
+		if (InStr(allowedChar, ele)){
 			if (ele = "-"){
 					ele := "•"
 			}
