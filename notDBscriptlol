@@ -1,0 +1,152 @@
+Gui, +AlwaysOnTop ; Set window to be always on top 
+Gui, Show, w350 h270
+Gui, Add, Text,, ------------------------------------------Key Delay-----------------------------------------
+Gui, Add, Edit, w300 vKeyDelay, 100
+Gui, Add, Text,, ----------------------------------------Sheet Music-----------------------------------------
+Gui, Add, Edit, R10 w300 vPianoMusic
+Gui, Add, Text,, 								  F4 To Begin from Start
+Gui, Add, Text,, 								Press F8 To Stop/Resume
+Gui, Show
+
+; original script: https://pastebin.com/raw/vqKVsfqE
+; extra modifications are added by me (discord: phrogfibsh)
+; I AM NOT ASSOCIATED WITH THE JJK SHENANIGANS COMMUNITY
+
+class pianoPlayer{
+	isPaused := false
+	currentIndex := 0
+	originalPos := 1
+	restartSheet := false ; i need to rename this but idk
+	hotkeyMapper := []
+	str_hotkeyMapper := ""
+	OldHotkey := "zxcvbnmjkl"
+	NewHotkey := "1234567890"
+	
+	__New(pianoshit, Keydelay){
+		this.pianoshit := pianoshit
+		this.KeyDelay := Keydelay
+	}
+	
+	keyMapper(){
+		Loop, % StrLen(this.OldHotkey){
+			oldkey := SubStr(this.OldHotkey, A_Index, 1)
+			newkey := SubStr(this.NewHotkey, A_Index, 1)
+			this.hotkeyMapper.push({old: oldkey, new: newkey})
+		}
+		
+		for index, key in this.hotkeyMapper{ ; testing only
+			this.str_hotkeyMapper .= "old: " key.old " new: " key.new "`n"
+		} ;MsgBox % "mapper: " this.str_hotkeyMapper
+		
+		this.replaceKeys()
+	}
+	
+	replaceKeys(){
+		replacedSheet := this.pianoshit
+		
+		for index, key in this.hotkeyMapper{
+			;MsgBox % "index: " index " key old: " key.old " key new: " key.new
+			StringReplace, replacedSheet, replacedSheet, % key.old, % key.new, All
+		}
+		;GuiControl,, PianoMusic, % replacedSheet
+		this.startPlayback(replacedSheet)
+		
+	}
+	
+	startPlayback(replacedSheet){
+		replacedSheet := replacedSheet
+		Gui, Submit, Nohide
+		;MsgBox, % "Sheet: " replacedSheet
+		this.isPaused := false
+		this.currentIndex := this.originalPos
+		this.playMusic(replacedSheet)
+	}
+	
+	playMusic(replacedSheet){
+		replacedSheet := replacedSheet
+		Sleep, 200
+		while (this.currentIndex := RegExMatch(replacedSheet, "U)(\[.*]|.)", Keys, this.currentIndex)){
+			Gui, Submit, Nohide
+			
+			if (GetKeyState("F8", "P")){ ; sometimes my macro needs a rest so i press f8
+				this.isPaused := true
+				while (this.isPaused){
+					ToolTip, % "Playback Paused at Key: " Keys
+					Sleep, 100
+					
+					if (GetKeyState("F8", "P")){
+						Sleep, 100
+						this.restartSheet := true
+						break
+					}
+					
+					if (GetKeyState("F4", "P")){
+						this.restartSheet := true
+						break
+					}
+				}
+			}
+			
+			if (GetKeyState("F4", "P")){ ; f4 stops too so yea
+				this.isPaused := true
+				break
+			}
+
+			this.currentIndex += StrLen(Keys)
+			ToolTip, % "Current Index: " this.currentIndex " | Key: " Keys
+			Keys := Trim(Keys, "[]")
+			SendInput % Keys
+			Sleep, % this.KeyDelay
+		}
+		
+		this.isPaused := true
+		ToolTip ; Clear tooltip
+		
+		if (this.restartSheet){
+			return
+		}
+	}
+	
+	pauseToggle(){
+		this.isPaused := !this.isPaused
+		if (this.isPaused){
+			; you have been temporarily cursed to breathe manually
+		} else{
+			this.playMusic()
+		}
+	}
+}
+
+selected_characters := ["z","x","c","v","b","n","m","j","k","l", "[", "]", "-"]
+
+F4:: ; start playback
+	allowedChar := ""
+	filtered_sheet := ""
+	
+	Gui, Submit, Nohide
+	for index, char in selected_characters{
+		allowedChar .= char
+	}
+	_pianoSheet := RegExReplace(PianoMusic, "`n|`r|/")
+	Loop, Parse, _pianoSheet ; only allows ele in selected_characters array
+	{
+		ele := A_LoopField
+		if (InStr(allowedChar, ele)){
+			if (ele = "-"){
+					ele := "•"
+			}
+			filtered_sheet .= ele
+		}
+	}
+	PIANOSHEET := new pianoPlayer(filtered_sheet, KeyDelay)
+    PIANOSHEET.keyMapper()
+return
+
+F8:: ; toggle pause/resume
+	if(IsObject(PIANOSHEET)){
+		PIANOSHEET.pauseToggle()
+	}
+return
+
+GuiClose:
+	ExitApp
