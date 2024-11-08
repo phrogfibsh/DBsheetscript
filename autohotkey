@@ -8,6 +8,7 @@ Gui, Add, Text,, 								  F4 To Begin from Start
 Gui, Add, Text,, 								Press F8 To Stop/Resume
 Gui, Show
 
+; set up the autoplayer here: https://trello.com/b/ue1LfwEa/phrogs-ahk-sheet-repository
 ; original script: https://pastebin.com/raw/vqKVsfqE
 ; extra modifications are added by me (discord: phrogfibsh)
 
