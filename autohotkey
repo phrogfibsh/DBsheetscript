@@ -61,7 +61,8 @@ class pianoPlayer{
 			}
 
 			this.currentIndex += StrLen(Keys)
-			ToolTip, % "Current Index: " this.currentIndex " | Key: " Keys
+			;ToolTip, % "Current Index: " this.currentIndex " | Key: " Keys 
+		      ; ^ Remove the ";" at the front to enable and save the file afterwards
 			Keys := Trim(Keys, "[]")
 			SendInput % Keys
 			Sleep, % this.KeyDelay
