@@ -39,7 +39,7 @@ class pianoPlayer{
 			if (GetKeyState("F8", "P")){ ; sometimes my macro needs a rest so i press f8
 				this.isPaused := true
 				while (this.isPaused){
-					ToolTip, % "Playback Paused at Key: " Keys
+					;ToolTip, % "Playback Paused at Key: " Keys ;same as line 64
 					Sleep, 100
 					
 					if (GetKeyState("F8", "P")){
