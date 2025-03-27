@@ -10,7 +10,7 @@ Gui, Show
 
 ; original script: https://pastebin.com/raw/vqKVsfqE
 ; extra modifications are added by me (discord: phrogfibsh)
-; I AM NOT ASSOCIATED WITH THE JJK SHENANIGANS COMMUNITY
+; made for any virtual music stuff that allows 1234567890 as input (and specifically only that range)
 
 class pianoPlayer{
 	isPaused := false
