@@ -3,6 +3,6 @@ autohotkey v2.0 uses a different type of input and may perform slower.
 
 
 
-the third script is not for desert bus 
+ignore third script, was testing something out
 
 ! **your pc's performance will affect how fast the autoplayer runs** !
