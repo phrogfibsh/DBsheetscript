@@ -1,0 +1,504 @@
+; autoplayer created by ml3czus
+
+Gui, +AlwaysOnTop
+; --- Global variables ---
+CurrentLoop := 0
+LoopLimit := 1
+Paused := false
+StopPlay := false
+isPlaying := false
+Songs := []
+url := "https://vercel-song-sheets.vercel.app/songs.json"
+
+; --- JSON parser (simple embedded) ---
+; coz autohotkey didn't have one so i needed to use chatgpt to import one here
+JSON_Parse(str) {
+    pos := 1
+    return JSON_ParseValue(str, pos)
+}
+JSON_ParseValue(str, ByRef pos) {
+    SkipWhitespace(str, pos)
+    if (SubStr(str, pos, 1) = "{")
+        return JSON_ParseObject(str, pos)
+    else if (SubStr(str, pos, 1) = "[")
+        return JSON_ParseArray(str, pos)
+    else if (SubStr(str, pos, 1) = """")
+        return JSON_ParseString(str, pos)
+    else if (RegExMatch(SubStr(str, pos), "^\d", m))
+        return JSON_ParseNumber(str, pos)
+    else if (SubStr(str, pos, 4) = "true") {
+        pos += 4
+        return true
+    } else if (SubStr(str, pos, 5) = "false") {
+        pos += 5
+        return false
+    } else if (SubStr(str, pos, 4) = "null") {
+        pos += 4
+        return ""
+    }
+    return ""
+}
+SkipWhitespace(str, ByRef pos) {
+    while (pos <= StrLen(str) && InStr(" `t`n`r", SubStr(str, pos, 1)))
+        pos++
+}
+JSON_ParseObject(str, ByRef pos) {
+    obj := {}
+    pos++
+    SkipWhitespace(str, pos)
+    while (pos <= StrLen(str) && SubStr(str, pos, 1) != "}") {
+        key := JSON_ParseString(str, pos)
+        SkipWhitespace(str, pos)
+        pos++
+        SkipWhitespace(str, pos)
+        val := JSON_ParseValue(str, pos)
+        obj[key] := val
+        SkipWhitespace(str, pos)
+        if (SubStr(str, pos, 1) = ",")
+            pos++
+        SkipWhitespace(str, pos)
+    }
+    pos++
+    return obj
+}
+
+JSON_ParseArray(str, ByRef pos) {
+    arr := []
+    pos++
+    SkipWhitespace(str, pos)
+    while (pos <= StrLen(str) && SubStr(str, pos, 1) != "]") {
+        val := JSON_ParseValue(str, pos)
+        arr.Push(val)
+        SkipWhitespace(str, pos)
+        if (SubStr(str, pos, 1) = ",")
+            pos++
+        SkipWhitespace(str, pos)
+    }
+    pos++
+    return arr
+}
+JSON_ParseString(str, ByRef pos) {
+    pos++
+    result := ""
+    while (pos <= StrLen(str)) {
+        ch := SubStr(str, pos, 1)
+        if (ch = "\") {
+            pos++
+            nextChar := SubStr(str, pos, 1)
+            if (nextChar = "n")
+                result .= "`n"
+            else if (nextChar = "r")
+                result .= "`r"
+            else if (nextChar = "t")
+                result .= "`t"
+            else if (nextChar = """")
+                result .= """"
+            else if (nextChar = "/")
+                result .= "/"
+            else if (nextChar = "b")
+                result .= Chr(8)
+            else if (nextChar = "f")
+                result .= Chr(12)
+            else
+                result .= nextChar
+            pos++
+            continue
+        }
+        if (ch = """") {
+            pos++
+            return result
+        }
+        result .= ch
+        pos++
+    }
+    return ""
+}
+JSON_ParseNumber(str, ByRef pos) {
+    re := "^\-?\d+(\.\d+)?([eE][+\-]?\d+)?"
+    if RegExMatch(SubStr(str, pos), re, m)
+    {
+        val := m.Value
+        pos += StrLen(val)
+        return val + 0
+    }
+    return 0
+}
+
+; --- Sheet ---
+Gui, Add, GroupBox, x10 y5 w320 h200 Center, Piano/Guitar Sheet
+Gui, Add, Edit, R10 x20 y25 w300 h130 vSheet, Insert your Piano/Guitar sheet here :3
+Gui, Add, Button, x20 y170 w90 gLoadFromFile, Load from File
+Gui, Add, Edit, x120 y171 w200 vLoadedFileName Disabled,
+
+; --- Settings ---
+Gui, Add, GroupBox, x10 y205 w320 h150 Center, Settings
+Gui, Add, Checkbox, x20 y225 w130 vEnableToolboxOption, Enable Toolbox
+Gui, Add, Checkbox, x20 y245 w120 vUsePauseDelay gTogglePauseDelay, Manual Pause Delay
+Gui, Add, Checkbox, x20 y265 w120 vUseKeyDelay gToggleKeyDelay, Manual Key Delay
+Gui, Add, Edit, x140 y241 w180 vPauseDelay Disabled, Set value here (0-500 | Default: 100)
+Gui, Add, Edit, x140 y261 w180 vKeyDelay Disabled, Set value here (0-500 | Default: 200)
+Gui, Add, Checkbox, x20 y285 w100 vUseLoop gToggleLoop, Loop
+Gui, Add, Radio, x40 y305 w130 vLoopOptionInfinity gLoopOptionChanged Disabled, Infinite Loop
+Gui, Add, Radio, x40 y325 w130 vLoopOptionLimit gLoopOptionChanged Disabled, Limit Loops:
+Gui, Add, Edit, x170 y323 w60 vLoopCount Disabled, 1+
+
+; --- Info + Credits ---
+Gui, Add, GroupBox, x10 y355 w320 h90 Center, Info + Credits
+Gui, Add, Text, x30 y370 w280 Center, F4 To Play`nPress F7 To Stop`nPress F8 To Pause/Resume
+Gui, Add, Text, x30 y425 w280 Center, Auto-player by @ml3czus_ | Sheets by @phrogfibsh
+
+; --- Online Sheets ---
+Gui, Add, GroupBox, x340 y5 w280 h440 Center, Online Sheets
+Gui, Add, ListBox, r31 x350 y25 w260 vSheetList AltSubmit gSheetList,
+
+; --- Gui ---
+Gui, Add, StatusBar,, Ready.
+Gui, Show, w630 h480, Auto-player for Roblox
+
+LoadSongsFromURL(url)
+return
+
+; --- Load from File ---
+LoadFromFile:
+    SB_SetText("Loading file...")
+
+    SetTimer, ClearStatusBar, Off
+
+    FileSelectFile, SelectedFile, 3,, Open a Sheet File, Text Documents (*.txt)
+    if (!SelectedFile) {
+        SB_SetText("No file selected.")
+	      SetTimer, ClearStatusBar, -3000
+        return
+    }
+
+    SplitPath, SelectedFile, FileNameOnly
+    FileRead, FileContent, %SelectedFile%
+
+    GuiControl,, Sheet, %FileContent%
+    GuiControl,, LoadedFileName, %FileNameOnly%
+    SB_SetText("Loaded file: " . FileNameOnly)
+
+    SetTimer, ClearStatusBar, -3000
+return
+
+ClearStatusBar:
+    SB_SetText("Ready.")
+return
+
+; --- ListBox selection changed ---
+SheetList:
+    selectedIndex := A_EventInfo
+    if (selectedIndex > 0) {
+        selectedSong := Songs[selectedIndex]
+        if (selectedSong) {
+            GuiControl,, Sheet, % selectedSong.sheet
+        }
+    }
+return
+
+; --- Load songs JSON ---
+LoadSongsFromURL(url) {
+    global Songs
+    try {
+        http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        http.Open("GET", url, false)
+        http.Send()
+
+        if (http.Status != 200) {
+            MsgBox, 16, HTTP Error, % "HTTP Error: " http.Status
+            return
+        }
+
+        response := http.ResponseText
+
+        Songs := JSON_Parse(response)
+        if !IsObject(Songs) {
+            MsgBox, 16, JSON Error, Failed to parse songs JSON.
+            return
+        }
+
+        GuiControl,, SheetList, |
+
+        listItems := ""
+        for index, song in Songs {
+            if IsObject(song) && song.HasKey("name") {
+                listItems .= (listItems = "" ? "" : "|") . song.name
+            }
+        }
+        GuiControl,, SheetList, %listItems%
+        SB_SetText("Loaded " . Songs.MaxIndex() . " songs from online.")
+        SetTimer, ClearStatusBar, -3000
+    } 
+    catch e {
+        MsgBox, 16, Connection Error, % "Failed to connect to server.`nOnline Sheets won't be loaded.`nMake sure you are connected to the internet."
+    }
+}
+return
+
+; --- Toggle Loop ---
+ToggleLoop:
+Gui, Submit, NoHide
+if (UseLoop) {
+    GuiControl, Enable, LoopOptionInfinity
+    GuiControl,, LoopOptionInfinity, 1
+    GuiControl, Enable, LoopOptionLimit
+    GuiControl, % LoopOptionLimit ? "Enable" : "Disable", LoopCount
+} else {
+    GuiControl, Disable, LoopOptionInfinity
+    GuiControl,, LoopOptionInfinity, 0
+    GuiControl, Disable, LoopOptionLimit
+    GuiControl,, LoopOptionLimit, 0
+    GuiControl, Disable, LoopCount
+    GuiControl,, LoopCount, 1+
+}
+return
+
+; --- Toggle Edits ---
+LoopOptionChanged:
+Gui, Submit, NoHide
+if (LoopOptionLimit && UseLoop) {
+    GuiControl, Enable, LoopCount
+    GuiControl,, LoopCount, 1+
+} else {
+    GuiControl, Disable, LoopCount
+    GuiControl,, LoopCount, 1+
+}
+return
+
+TogglePauseDelay:
+Gui, Submit, NoHide
+if (UsePauseDelay) {
+    GuiControl, Enable, PauseDelay
+    GuiControl,, PauseDelay, Set value here (0-500 | Default: 100)
+} else {
+    GuiControl, Disable, PauseDelay
+    GuiControl,, PauseDelay, Set value here (0-500 | Default: 100)
+}
+return
+
+ToggleKeyDelay:
+Gui, Submit, NoHide
+if (UseKeyDelay) {
+    GuiControl, Enable, KeyDelay
+    GuiControl,, KeyDelay, Set value here (0-500 | Default: 200)
+} else {
+    GuiControl, Disable, KeyDelay
+    GuiControl,, KeyDelay, Set value here (0-500 | Default: 200)
+}
+return
+
+; --- Play (F4) ---
+F4::
+if (isPlaying)
+    return
+isPlaying := true
+Paused := false
+Gui, Submit, NoHide
+
+KeyDelayFound := false
+SkipLines := true
+NewSheet := ""
+
+if !RegExMatch(Sheet, "i)^.*delay[^\d]{0,10}(\d+).*", delayMatch)
+{
+    SkipLines := false
+}
+
+Loop, Parse, Sheet, `n, `r
+{
+    line := A_LoopField
+    if (SkipLines) {
+        if (RegExMatch(line, "i)delay[^\d]{0,10}(\d+)", delayMatch)) {
+            KeyDelayText := "Auto set: " . delayMatch1
+            GuiControl,, KeyDelay, %KeyDelayText%
+            KeyDelay := delayMatch1
+            KeyDelayFound := true
+            SkipLines := false
+            continue
+        }
+        continue
+    }
+    NewSheet .= line "`n"
+}
+
+if (UsePauseDelay) {
+    if (!RegExMatch(PauseDelay, "^\d+$")) {
+        MsgBox, 4,, Invalid value in Pause Delay.`nMust be a whole number.`nUse default value 100?`nChoosing "No" will stop the auto-player.
+        IfMsgBox, Yes
+            PauseDelay := 100
+        else {
+            isPlaying := false
+            return
+        }
+    } else if (PauseDelay < 0 || PauseDelay > 500) {
+        MsgBox, 4,, Pause Delay value out of range (0-500).`nUse default value 100?`nChoosing "No" will stop the auto-player.
+        IfMsgBox, Yes
+            PauseDelay := 100
+        else {
+            isPlaying := false
+            return
+        }
+    }
+} else {
+    PauseDelay := 100
+}
+
+if RegExMatch(KeyDelay, "i)Auto set:\s*(\d+)", autoMatch) {
+    extractedKeyDelay := autoMatch1 + 0
+} else if RegExMatch(KeyDelay, "^\d+$") {
+    extractedKeyDelay := KeyDelay + 0
+} else {
+    if (UseKeyDelay = false) {
+        extractedKeyDelay := 200
+    } else {
+        MsgBox, 4,, Invalid value in Key Delay.`nValue must be in between of 0 to 500.`nUse default value 200?`nChoosing "No" will stop the auto-player.
+        IfMsgBox, Yes
+            extractedKeyDelay := 200
+        else {
+            isPlaying := false
+            return
+        }
+    }
+}
+
+if (extractedKeyDelay < 0 || extractedKeyDelay > 500) {
+    MsgBox, 4,, Key Delay value out of range (0-500).`nUse default value 200?`nChoosing "No" will stop the auto-player.
+    IfMsgBox, Yes
+        extractedKeyDelay := 200
+    else {
+        isPlaying := false
+        return
+    }
+}
+
+KeyDelayValue := extractedKeyDelay
+PauseDelayValue := PauseDelay
+
+NewSheet := RTrim(NewSheet, "`n")
+Sheet := NewSheet
+GuiControl,, Sheet, %Sheet%
+
+if (!UseLoop) {
+    LoopLimit := 1
+} else if (LoopOptionLimit) {
+    if (!RegExMatch(LoopCount, "^\d+$") || LoopCount < 1) {
+        MsgBox, 4,, Invalid Loop Count value.`nMust be a whole number >=1.`nUse infinite loops instead?`nChoosing "No" will stop the auto-player.
+        IfMsgBox, Yes
+            LoopLimit := 0
+        else {
+            isPlaying := false
+            return
+        }
+    } else {
+        LoopLimit := LoopCount + 0
+    }
+} else {
+    LoopLimit := 0
+}
+
+CurrentLoop := 0
+StopPlay := false
+ToolTip
+
+SetTimer, UpdateTooltip, 10
+
+while (!StopPlay) {
+    CurrentLoop++
+    if(EnableToolboxOption) {
+    SB_SetText("Playing - Loop " . CurrentLoop . "/" . (LoopLimit = 0 ? "inf" : LoopLimit))
+    }
+
+    X := 1
+    while (X := RegExMatch(Sheet, "U)(\[[^\[\]]+\]|.)", Match, X))
+    {
+        if (StopPlay) {
+            break
+        }
+
+        WaitWhilePaused()
+
+        X += StrLen(Match)
+        Note := Trim(Match)
+
+        if (RegExMatch(Note, "^\[.*\]$")) {
+            NotesOnly := SubStr(Note, 2, -1)
+            Loop, Parse, NotesOnly 
+	          {
+                WaitWhilePaused()
+		            if (StopPlay)
+		              break
+                SendInput, %A_LoopField%
+            }
+            Sleep, %KeyDelayValue%
+            }
+            else if (Note ~= "^[|/\\\n\r]$") {
+                Sleep, %PauseDelayValue%
+            }
+	          else if (Note ~= "-") {
+	              Sleep, %KeyDelayValue%
+	          }
+            else if !(Note ~= "[\[\]|/\\\n\r]") {
+                WaitWhilePaused()
+	              if (StopPlay)
+		                break
+            SendInput, %Note%
+            Sleep, %KeyDelayValue%
+            }
+    }
+
+    if (StopPlay || (LoopLimit != 0 && CurrentLoop >= LoopLimit))
+        break
+}
+
+SetTimer, UpdateTooltip, Off
+ToolTip
+SB_SetText("Finished.")
+SetTimer, ClearStatusBar, -3000 
+isPlaying := false
+return
+
+WaitWhilePaused() {
+    global Paused, CurrentLoop, LoopLimit, StopPlay, EnableToolboxOption
+
+    while (Paused && !StopPlay) {
+        MouseGetPos, mx, my
+        TooltipText := "Auto-player running`nLoop " . CurrentLoop . "/" . (LoopLimit = 0 ? "inf" : LoopLimit) . " (Paused)"
+        if(EnableToolboxOption) {
+        ToolTip, %TooltipText%
+        }
+        SB_SetText("Paused - Loop " . CurrentLoop . "/" . (LoopLimit = 0 ? "inf" : LoopLimit))
+        Sleep, 10
+    }
+}
+
+UpdateTooltip() {
+    global Paused, CurrentLoop, LoopLimit, EnableToolboxOption
+    if (Paused)
+        return
+
+    MouseGetPos, mx, my
+    TooltipText := "Auto-player running`nLoop " . CurrentLoop . "/" . (LoopLimit = 0 ? "inf" : LoopLimit)
+    if (EnableToolboxOption) {
+      ToolTip, %TooltipText%
+    }
+    SB_SetText("Playing - Loop " . CurrentLoop . "/" . (LoopLimit = 0 ? "inf" : LoopLimit))
+}
+
+; --- Stop (F7) ---
+F7::
+Critical
+StopPlay := true
+Paused := false
+SetTimer, UpdateTooltip, Off
+SB_SetText("Stopped.")
+ToolTip
+SetTimer, ClearStatusBar, -3000
+return
+
+; --- Suspend/Resume (F8) ---
+F8::
+Paused := !Paused
+return
+
+GuiClose:
+ExitApp
