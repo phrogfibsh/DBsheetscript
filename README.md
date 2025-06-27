@@ -1,8 +1,7 @@
-recommended to use the first autohotkey script, autohotkey v2.0 is actually just a bandaid solution for some users who weren't able to use the first script. 
-autohotkey v2.0 uses a different type of input and may perform slower.
+ahkautoplayer_ml3czus (beta) - new autoplayer w/ more advanced options + selectable sheets on the spot
 
+autohotkey - old autoplayer built with sticks and stones. still works just fine with simpler interface
 
-
-ignore third script, was testing something out
+autohotkeyv2.0 - bandaid solution for those who are unable to run the above autohotkey file, only use this if nothing else works
 
 ! **your pc's performance will affect how fast the autoplayer runs** !
