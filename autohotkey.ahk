@@ -107,7 +107,7 @@ F4:: ; start playback
 			filtered_sheet .= ele
 		}
 	}
-	PIANOSHEET := new pianoPlayer(filtered_sheet, KeyDelay)
+	PIANOSHEET := new pianoPlayer(_pianosheet, KeyDelay)
     PIANOSHEET.startPlayback()
 return
 
