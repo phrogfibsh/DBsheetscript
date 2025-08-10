@@ -33,13 +33,14 @@ class pianoPlayer{
 	
 	playMusic(){
 		Sleep, 200
+		SetBatchLines, -1
 		while (this.currentIndex := RegExMatch(this.pianoshit, "U)(\[.*]|.)", Keys, this.currentIndex)){
 			Gui, Submit, Nohide
 			
 			if (GetKeyState("F8", "P")){ ; sometimes my macro needs a rest so i press f8
 				this.isPaused := true
 				while (this.isPaused){
-					;ToolTip, % "Playback Paused at Key: " Keys ;same as line 64
+					;ToolTip, % "Playback Paused at Key: " Keys
 					Sleep, 100
 					
 					if (GetKeyState("F8", "P")){
@@ -69,7 +70,7 @@ class pianoPlayer{
 		}
 		
 		this.isPaused := true
-		ToolTip ; Clear tooltip
+		;ToolTip ; Clear tooltip
 		
 		if (this.restartSheet){
 			return
@@ -97,17 +98,21 @@ F4:: ; start playback
 		allowedChar .= char
 	}
 	_pianoSheet := RegExReplace(PianoMusic, "`n|`r|/")
+	
 	Loop, Parse, _pianoSheet ; only allows ele in selected_characters array
 	{
 		ele := A_LoopField
-		if (InStr(allowedChar, ele)){
-			if (ele = "-"){
-					ele := "•"
-			}
+		if (ele ~= "^[^\s]$"){
 			filtered_sheet .= ele
 		}
+		;if (InStr(allowedChar, ele)){
+		;	if (ele = "-"){
+		;			ele := "•"
+		;	}
+		;	filtered_sheet .= ele
+		;}
 	}
-	PIANOSHEET := new pianoPlayer(_pianosheet, KeyDelay)
+	PIANOSHEET := new pianoPlayer(filtered_sheet, KeyDelay)
     PIANOSHEET.startPlayback()
 return
 
