@@ -1,4 +1,4 @@
-ahkautoplayer_ml3czus (beta) - new autoplayer w/ more advanced options + selectable sheets on the spot
+ahkautoplayer_ml3czus - new autoplayer w/ more advanced options + selectable sheets on the spot
 
 autohotkey - old autoplayer built with sticks and stones. still works just fine with simpler interface
 
