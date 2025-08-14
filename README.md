@@ -1,5 +1,5 @@
-ahkautoplayer_ml3czus - new autoplayer w/ more advanced options + selectable sheets on the spot
+ahkautoplayer_ml3czus - new autoplayer w/ more advanced options + selectable sheets on the spot, may run slower if your pc is slow
 
-autohotkey - old autoplayer built with sticks and stones. still works just fine with simpler interface
+autohotkey - old autoplayer built with sticks and stones. still works just fine with simpler interface, generally runs faster
 
 ! **your pc's performance will affect how fast the autoplayer runs** !
