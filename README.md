@@ -16,11 +16,11 @@ These autoplayers are not only limited to DB. They are also suitable for use wit
 ## Autoplayers for DB
 **1. ahkautoplayer_ml3czus.ahk** 
 
-Our latest autoplayer with more advanced options + selectable sheets on the spot. More likely to run slower if your pc is slow
+Our latest autoplayer with more advanced options + selectable sheets on the spot. More likely to run slower if your PC is slow.
     
 **2. autohotkey.ahk**
 
-Old autoplayer built with sticks and stones. Still works just fine with a much simpler interface and generally runs faster
+Old autoplayer built with sticks and stones. Still works just fine with a much simpler interface and generally runs faster. May not be compatible with AHK v2.0.
 
 > [!NOTE]
 > Your PC's performance will affect how fast the autoplayer runs
