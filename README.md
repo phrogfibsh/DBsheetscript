@@ -20,7 +20,7 @@ Our latest autoplayer with more advanced options + selectable sheets on the spot
     
 **2. autohotkey.ahk**
 
-Old autoplayer built with sticks and stones. Still works just fine with a much simpler interface and generally runs faster. May not be compatible with AHK v2.0.
+Old autoplayer built with sticks and stones. Still works just fine with a much simpler interface and generally runs faster.
 
 > [!NOTE]
 > Your PC's performance will affect how fast the autoplayer runs
