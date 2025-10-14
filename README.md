@@ -3,6 +3,15 @@ These autoplayers are not only limited to DB. They are also suitable for use wit
 
 ✨ _Credits to **@ml3czus** for sharing the latest autoplayer_ ✨
 
+## How to use the script
+**1. Download AHK**
+- https://www.autohotkey.com (Download v1.1)
+- Then select 'Express Installation'
+- Done with installation! Exit the application.
+
+**2. Download any of the listed autoplayers**
+- Once downloaded you may open the script and a GUI will appear.
+
 ## Resources
 **Links for sheets (Trello)**
 - Installation Guide + AHK Sheets - https://trello.com/b/ue1LfwEa/phrogs-ahk-sheet-repository
