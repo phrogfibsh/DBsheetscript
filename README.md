@@ -23,9 +23,11 @@ These autoplayers are not only limited to DB. They are also suitable for use wit
 - My YT - https://www.youtube.com/@phrogfibshthe2nd
 
 ## Autoplayers for DB
-**1. ahkautoplayer_ml3czus.ahk** 
+~~**1. ahkautoplayer_ml3czus.ahk**~~
 
-Our latest autoplayer with more advanced options + selectable sheets on the spot. More likely to run slower if your PC is slow.
+~~Our latest autoplayer with more advanced options + selectable sheets on the spot. More likely to run slower if your PC is slow.~~
+
+**[DEPRECATED]**, refer to https://github.com/ml3czus/ml3czus-autoplayer/releases/tag/v1.2.2.pipebomb instead.
     
 **2. autohotkey.ahk**
 
